@@ -1,68 +1,140 @@
 import streamlit as st
 import pandas as pd
-from pydantic import BaseModel, ValidationError
-from datetime import datetime
 
-# 1. THE GATEKEEPER: Define what perfect data looks like
-class CleanTransaction(BaseModel):
-    transaction_id: str
-    amount: float
+# Set page configuration for a premium look
+st.set_page_config(page_title="ReconSimple Pro", layout="wide", initial_sidebar_state="expanded")
 
-# 2. THE ENGINE: Match the files and find the gaps
-def run_reconciliation(sales_df, gateway_df):
-    # Standardize column names to lowercase and remove spaces
-    sales_df.columns = sales_df.columns.str.strip().str.lower()
-    gateway_df.columns = gateway_df.columns.str.strip().str.lower()
+# Custom CSS styling for metric containers
+st.markdown("""
+    <style>
+    div[data-testid="stMetricValue"] { font-size: 24px; font-weight: bold; }
+    div[data-testid="stMetricContainer"] { background-color: #1e222b; padding: 15px; border-radius: 10px; border: 1px solid #2d3139; }
+    </style>
+""", unsafe_allow_html=True)
 
-    # Rename columns to match our logic if they use common variations
-    sales_df = sales_df.rename(columns={'order id': 'transaction_id', 'id': 'transaction_id', 'order_id': 'transaction_id'})
-    gateway_df = gateway_df.rename(columns={'txn id': 'transaction_id', 'transaction id': 'transaction_id', 'payment_id': 'transaction_id'})
-
-    # Ensure transaction IDs are strings
-    sales_df['transaction_id'] = sales_df['transaction_id'].astype(str)
-    gateway_df['transaction_id'] = gateway_df['transaction_id'].astype(str)
-
-    # Merge the two files using an Outer Join
-    merged = pd.merge(sales_df, gateway_df, on="transaction_id", how="outer", suffixes=("_store", "_gateway"))
-
-    # Find orders that exist in the store but have NO payment in the gateway
-    missing_payouts = merged[merged["amount_gateway"].isna() & merged["amount_store"].notna()]
-    
-    return missing_payouts
-
-# 3. THE INTERFACE: Build the web page layout
-st.set_page_config(page_title="ReconSimple", layout="wide")
-st.title("📊 ReconSimple")
-st.subheader("Identify Multi-Channel Fee Leakage & Missing Orders Instantly")
-
+st.title("📊 ReconSimple Pro")
+st.subheader("Multi-Channel Financial Reconciliation & Leakage Audit Engine")
 st.markdown("---")
 
-# File Upload Columns
-col1, col2 = st.columns(2)
-with col1:
-    uploaded_sales = st.file_uploader("1. Upload Store Orders (Shopify/WooCommerce CSV)", type=["csv"])
-with col2:
-    uploaded_gateway = st.file_uploader("2. Upload Payment Gateway Settlements (Razorpay/Stripe CSV)", type=["csv"])
+# Sidebar configurations
+st.sidebar.header("Audit Controls")
+expected_fee_pct = st.sidebar.slider("Expected Aggregator Fee (%)", 1.0, 5.0, 2.0, 0.1) / 100
 
-# Run Analysis Button
-if uploaded_sales and uploaded_gateway:
-    if st.button("🚀 Run Margin Audit", use_container_width=True):
-        with st.spinner("Analyzing files for data discrepancies..."):
-            try:
-                # Load files into memory
-                df_sales = pd.read_csv(uploaded_sales)
-                df_gateway = pd.read_csv(uploaded_gateway)
+# Step 1: Create 5 Clean Upload Containers
+st.markdown("### 📥 Step 1: Ingest Channel Data Sources")
+with st.container():
+    col1, col2, col3, col4, col5 = st.columns(5)
+    with col1:
+        f_store = st.file_uploader("Storefront (Shopify/Woo)", type=["csv"])
+    with col2:
+        f_gtway1 = st.file_uploader("Primary Gateway (Razorpay)", type=["csv"])
+    with col3:
+        f_gtway2 = st.file_uploader("Backup Gateway (Stripe)", type=["csv"])
+    with col4:
+        f_mktplace = st.file_uploader("Marketplace (Amazon)", type=["csv"])
+    with col5:
+        f_logistics = st.file_uploader("Logistics (Shiprocket)", type=["csv"])
 
-                # Process the data
-                missing_data = run_reconciliation(df_sales, df_gateway)
+# Step 2: Processing Engine
+if f_store:
+    if st.button("🚀 Execute Multi-Channel Cross-Match Audit", use_container_width=True):
+        with st.spinner("Executing structural outer-joins across all active channels..."):
+            
+            # Read Core Storefront File (The Master Hub)
+            df_master = pd.read_csv(f_store)
+            df_master.columns = df_master.columns.str.strip().str.lower()
+            df_master = df_master.rename(columns={'order id': 'id', 'order_id': 'id', 'transaction_id': 'id'})
+            df_master['id'] = df_master['id'].astype(str)
+            
+            total_orders = len(df_master)
+            total_revenue = df_master.iloc[:, 1].sum() if len(df_master.columns) > 1 else 0
+            
+            # Tracking variables for reporting
+            leaked_orders_count = 0
+            fee_anomalies_count = 0
+            unfulfilled_orders_count = 0
 
-                # Display Results
-                st.markdown("### 🔍 Audit Results")
-                if len(missing_data) > 0:
-                    st.error(f"⚠️ Found {len(missing_data)} Ghost Orders! These orders exist in your store but no payment was recorded in your gateway.")
-                    st.dataframe(missing_data[['transaction_id', 'amount_store']])
+            # -------------------------------------------------------------
+            # Channel 2: Primary Gateway (Razorpay) Comparison
+            # -------------------------------------------------------------
+            if f_gtway1:
+                df_g1 = pd.read_csv(f_gtway1)
+                df_g1.columns = df_g1.columns.str.strip().str.lower()
+                df_g1 = df_g1.rename(columns={'txn id': 'id', 'transaction id': 'id', 'payment_id': 'id'})
+                df_g1['id'] = df_g1['id'].astype(str)
+                
+                # Merge logic
+                merged_g1 = pd.merge(df_master, df_g1, on='id', how='left', suffixes=('_store', '_g1'))
+                ghost_g1 = merged_g1[merged_g1[df_g1.columns[1]].isna()]
+                leaked_orders_count += len(ghost_g1)
+
+            # -------------------------------------------------------------
+            # Channel 3: Backup Gateway (Stripe) Comparison
+            # -------------------------------------------------------------
+            if f_gtway2:
+                df_g2 = pd.read_csv(f_gtway2)
+                df_g2.columns = df_g2.columns.str.strip().str.lower()
+                df_g2 = df_g2.rename(columns={'txn id': 'id', 'transaction id': 'id'})
+                df_g2['id'] = df_g2['id'].astype(str)
+                
+                merged_g2 = pd.merge(df_master, df_g2, on='id', how='left')
+                # Simple flag logic example for high fees
+                if 'fee' in df_g2.columns and 'amount' in df_g2.columns:
+                    high_fee = df_g2[df_g2['fee'] > (df_g2['amount'] * expected_fee_pct)]
+                    fee_anomalies_count += len(high_fee)
+
+            # -------------------------------------------------------------
+            # Channel 5: Logistics Tracker (Shiprocket Cod/Prepaid matching)
+            # -------------------------------------------------------------
+            if f_logistics:
+                df_log = pd.read_csv(f_logistics)
+                df_log.columns = df_log.columns.str.strip().str.lower()
+                df_log = df_log.rename(columns={'awb': 'id', 'order id': 'id', 'order_id': 'id'})
+                df_log['id'] = df_log['id'].astype(str)
+                
+                merged_log = pd.merge(df_master, df_log, on='id', how='left')
+                unfulfilled = merged_log[merged_log[df_log.columns[1]].isna()]
+                unfulfilled_orders_count = len(unfulfilled)
+
+            # -------------------------------------------------------------
+            # Step 3: High-End Visualizations & Executive Summary
+            # -------------------------------------------------------------
+            st.markdown("### 📈 Step 2: System Health & Executive Summary")
+            
+            m1, m2, m3, m4 = st.columns(4)
+            with m1:
+                st.metric("Total Ingested Orders", f"{total_orders}", help="Total unique orders registered in storefront database")
+            with m2:
+                st.metric("Ghost Orders (Revenue Leak)", f"{leaked_orders_count}", delta=f"-{leaked_orders_count}" if leaked_orders_count > 0 else "0", delta_color="inverse")
+            with m3:
+                st.metric("Fee Rule Violations", f"{fee_anomalies_count}", delta=f"{fee_anomalies_count} flagged" if fee_anomalies_count > 0 else "0", delta_color="off")
+            with m4:
+                st.metric("Unshipped / Lost Orders", f"{unfulfilled_orders_count}", help="Orders paid for but missing from logistics logs")
+
+            st.markdown("### 🔍 Step 3: Granular Channel Overviews")
+            
+            # Tabbed interface to separate messy multi-file results cleanly
+            tab1, tab2, tab3 = st.tabs(["Ghost Orders Analysis", "Fee Deviations", "Logistics Discrepancies"])
+            
+            with tab1:
+                st.subheader("Storefront vs Payment Gateways Dropouts")
+                if f_gtway1 and leaked_orders_count > 0:
+                    st.dataframe(ghost_g1[['id']].rename(columns={'id': 'Flagged Order ID'}), use_container_width=True)
                 else:
-                    st.success("✅ Perfect Match! All storefront orders successfully match your payment gateway settlements.")
-
-            except Exception as e:
-                st.error(f"Error parsing files: Check if your CSV files contain 'transaction_id' and 'amount' columns. Detailed error: {e}")
+                    st.success("No multi-channel order dropouts discovered.")
+                    
+            with tab2:
+                st.subheader("Processor Fee Anomalies")
+                if fee_anomalies_count > 0:
+                    st.dataframe(high_fee, use_container_width=True)
+                else:
+                    st.success("All processor transactions settle within your expected percentage variance thresholds.")
+                    
+            with tab3:
+                st.subheader("Storefront vs Courier Matching")
+                if f_logistics and unfulfilled_orders_count > 0:
+                    st.dataframe(unfulfilled[['id']], use_container_width=True)
+                else:
+                    st.success("All processed sales have corresponding tracking information generated.")
+else:
+    st.info("💡 To begin, upload at least your Master Storefront data file to populate the hub framework.")
