@@ -1,5 +1,67 @@
 import streamlit as st
 import pandas as pd
+import requests  # Built-in library to talk to external web APIs
+from datetime import datetime, timedelta
+
+# ==========================================
+# 1. AUTOMATED API INGESTION ENGINE ($0 COST)
+# ==========================================
+
+def fetch_shopify_orders(api_token, shop_url):
+    """Fetches the last 24 hours of orders directly from Shopify Admin API"""
+    # Calculate time boundary for yesterday
+    yesterday = (datetime.utcnow() - timedelta(days=1)).strftime("%Y-%m-%dT%H:%M:%SZ")
+    
+    # Shopify endpoint URL layout
+    endpoint = f"https://{shop_url}/admin/api/2026-04/orders.json?created_at_min={yesterday}&status=any"
+    headers = {
+        "X-Shopify-Access-Token": api_token,
+        "Content-Type": "application/json"
+    }
+    
+    try:
+        # Requesting data safely over HTTPS
+        response = requests.get(endpoint, headers=headers, timeout=10)
+        if response.status_code == 200:
+            orders = response.json().get('orders', [])
+            # Flatten JSON data into a lean Pandas DataFrame structure
+            if orders:
+                return pd.DataFrame([{
+                    'id': str(order['order_number']),
+                    'amount_store': float(order['current_total_price'])
+                } for order in orders])
+            return pd.DataFrame(columns=['id', 'amount_store'])
+        else:
+            st.sidebar.error(f"Shopify Sync Failed: HTTP {response.status_code}")
+            return None
+    except Exception as e:
+        st.sidebar.error(f"Shopify Connection Error: {e}")
+        return None
+
+def fetch_razorpay_payments(api_key, api_secret):
+    """Fetches the last 24 hours of transaction settlements from Razorpay API"""
+    # Razorpay utilizes Unix timestamps for intervals
+    from_time = int((datetime.now() - timedelta(days=1)).timestamp())
+    endpoint = f"https://api.razorpay.com/v1/payments?from={from_time}"
+    
+    try:
+        # Razorpay requires HTTP Basic Authentication (Key ID & Secret)
+        response = requests.get(endpoint, auth=(api_key, api_secret), timeout=10)
+        if response.status_code == 200:
+            payments = response.json().get('items', [])
+            if payments:
+                return pd.DataFrame([{
+                    'id': str(pay['notes'].get('shopify_order_number', pay['description'])),
+                    'amount_gateway': float(pay['amount']) / 100, # Convert Paisa to INR Rupees
+                    'fee_gateway': float(pay.get('fee', 0)) / 100
+                } for pay in payments if pay['status'] == 'captured'])
+            return pd.DataFrame(columns=['id', 'amount_gateway', 'fee_gateway'])
+        else:
+            st.sidebar.error(f"Razorpay Sync Failed: HTTP {response.status_code}")
+            return None
+    except Exception as e:
+        st.sidebar.error(f"Razorpay Connection Error: {e}")
+        return None
 
 # 1. Page Configuration & Title Setup
 st.set_page_config(page_title="ReconSimple Pro", layout="wide", initial_sidebar_state="expanded")
