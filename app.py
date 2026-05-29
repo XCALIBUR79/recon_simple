@@ -1,140 +1,224 @@
 import streamlit as st
 import pandas as pd
 
-# Set page configuration for a premium look
+# 1. Page Configuration & Title Setup
 st.set_page_config(page_title="ReconSimple Pro", layout="wide", initial_sidebar_state="expanded")
 
-# Custom CSS styling for metric containers
+# 2. Advanced Premium CSS Injector (Modern Luxury Dark Theme)
 st.markdown("""
     <style>
-    div[data-testid="stMetricValue"] { font-size: 24px; font-weight: bold; }
-    div[data-testid="stMetricContainer"] { background-color: #1e222b; padding: 15px; border-radius: 10px; border: 1px solid #2d3139; }
+    /* Global Styles */
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+    
+    html, body, [data-testid="stAppViewContainer"] {
+        font-family: 'Inter', sans-serif;
+        background-color: #0d1117;
+        color: #c9d1d9;
+    }
+    
+    /* Header & Typography Styling */
+    h1 {
+        font-weight: 700 !important;
+        color: #ffffff !important;
+        letter-spacing: -0.5px;
+    }
+    h3 {
+        font-weight: 600 !important;
+        color: #f0f6fc !important;
+        margin-top: 20px !important;
+    }
+    
+    /* Card Container Styling */
+    div[data-testid="stVerticalBlock"] > div {
+        background: none;
+    }
+    
+    /* Modern Metric Card Designs */
+    div[data-testid="stMetricContainer"] {
+        background: rgba(22, 27, 34, 0.8);
+        border: 1px solid #30363d;
+        border-radius: 12px;
+        padding: 20px 24px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        transition: transform 0.2s ease, border-color 0.2s ease;
+    }
+    div[data-testid="stMetricContainer"]:hover {
+        transform: translateY(-2px);
+        border-color: #58a6ff;
+    }
+    div[data-testid="stMetricLabel"] {
+        color: #8b949e !important;
+        font-size: 14px !important;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    div[data-testid="stMetricValue"] {
+        color: #ffffff !important;
+        font-size: 28px !important;
+        font-weight: 700 !important;
+    }
+    
+    /* Upload Box Wrapper Styling */
+    .upload-card {
+        background-color: #161b22;
+        border: 1px dashed #444c56;
+        border-radius: 12px;
+        padding: 15px;
+        text-align: center;
+    }
+    
+    /* Premium Action Button Customization */
+    div.stButton > button:first-child {
+        background: linear-gradient(135deg, #1f6feb 0%, #0d44a3 100%);
+        color: white !important;
+        border: none;
+        padding: 12px 24px;
+        font-weight: 600;
+        border-radius: 8px;
+        box-shadow: 0 4px 14px rgba(31, 111, 235, 0.4);
+        transition: all 0.2s ease;
+    }
+    div.stButton > button:first-child:hover {
+        background: linear-gradient(135deg, #388bfd 0%, #1f6feb 100%);
+        transform: translateY(-1px);
+        box-shadow: 0 6px 20px rgba(31, 111, 235, 0.6);
+    }
+    
+    /* Tab Styling Customization */
+    button[data-testid="stMarkdownContainer"] {
+        font-weight: 600;
+    }
+    div[data-testid="stTabBar"] {
+        background-color: #161b22;
+        border-radius: 8px;
+        padding: 4px;
+        border: 1px solid #30363d;
+    }
+    button[aria-selected="true"] {
+        background-color: #21262d !important;
+        border-radius: 6px !important;
+        color: #58a6ff !important;
+    }
     </style>
 """, unsafe_allow_html=True)
 
+# 3. Sidebar Brand Header
+st.sidebar.markdown("<h2 style='color: white; font-weight: 700;'>⚙️ Engine Config</h2>", unsafe_allow_html=True)
+expected_fee_pct = st.sidebar.slider("Target Aggregator Fee Base (%)", 1.0, 5.0, 2.3, 0.1) / 100
+st.sidebar.markdown("---")
+st.sidebar.markdown("### System Environment\n`Production Cloud v1.0.2`")
+
+# 4. Main Header Section
 st.title("📊 ReconSimple Pro")
-st.subheader("Multi-Channel Financial Reconciliation & Leakage Audit Engine")
-st.markdown("---")
+st.markdown("<p style='color: #8b949e; font-size: 16px; margin-top: -15px;'>Enterprise Infrastructure Multi-Channel Reconciliation Engine</p>", unsafe_allow_html=True)
+st.markdown("<div style='height: 2px; background: linear-gradient(90deg, #1f6feb 0%, transparent 100%); margin-bottom: 30px;'></div>", unsafe_allow_html=True)
 
-# Sidebar configurations
-st.sidebar.header("Audit Controls")
-expected_fee_pct = st.sidebar.slider("Expected Aggregator Fee (%)", 1.0, 5.0, 2.0, 0.1) / 100
-
-# Step 1: Create 5 Clean Upload Containers
-st.markdown("### 📥 Step 1: Ingest Channel Data Sources")
+# 5. Ingestion File Upload Matrix
+st.markdown("### 📥 1. Ingest Active Channel Data")
 with st.container():
     col1, col2, col3, col4, col5 = st.columns(5)
     with col1:
+        st.markdown('<div class="upload-card">', unsafe_allow_html=True)
         f_store = st.file_uploader("Storefront (Shopify/Woo)", type=["csv"])
+        st.markdown('</div>', unsafe_allow_html=True)
     with col2:
-        f_gtway1 = st.file_uploader("Primary Gateway (Razorpay)", type=["csv"])
+        st.markdown('<div class="upload-card">', unsafe_allow_html=True)
+        f_gtway1 = st.file_uploader("Primary (Razorpay)", type=["csv"])
+        st.markdown('</div>', unsafe_allow_html=True)
     with col3:
-        f_gtway2 = st.file_uploader("Backup Gateway (Stripe)", type=["csv"])
+        st.markdown('<div class="upload-card">', unsafe_allow_html=True)
+        f_gtway2 = st.file_uploader("Backup (Stripe)", type=["csv"])
+        st.markdown('</div>', unsafe_allow_html=True)
     with col4:
+        st.markdown('<div class="upload-card">', unsafe_allow_html=True)
         f_mktplace = st.file_uploader("Marketplace (Amazon)", type=["csv"])
+        st.markdown('</div>', unsafe_allow_html=True)
     with col5:
+        st.markdown('<div class="upload-card">', unsafe_allow_html=True)
         f_logistics = st.file_uploader("Logistics (Shiprocket)", type=["csv"])
+        st.markdown('</div>', unsafe_allow_html=True)
 
-# Step 2: Processing Engine
+st.markdown("<div style='margin-bottom: 25px;'></div>", unsafe_allow_html=True)
+
+# 6. Backend Cross-Matching Operational Loop
 if f_store:
-    if st.button("🚀 Execute Multi-Channel Cross-Match Audit", use_container_width=True):
-        with st.spinner("Executing structural outer-joins across all active channels..."):
+    if st.button("🚀 Execute System-Wide Reconciliation Audit", use_container_width=True):
+        st.markdown("---")
+        with st.spinner("Processing structural multi-tenant joins..."):
             
-            # Read Core Storefront File (The Master Hub)
+            # Setup base dataframe mapping
             df_master = pd.read_csv(f_store)
             df_master.columns = df_master.columns.str.strip().str.lower()
             df_master = df_master.rename(columns={'order id': 'id', 'order_id': 'id', 'transaction_id': 'id'})
             df_master['id'] = df_master['id'].astype(str)
             
             total_orders = len(df_master)
-            total_revenue = df_master.iloc[:, 1].sum() if len(df_master.columns) > 1 else 0
-            
-            # Tracking variables for reporting
             leaked_orders_count = 0
             fee_anomalies_count = 0
             unfulfilled_orders_count = 0
 
-            # -------------------------------------------------------------
-            # Channel 2: Primary Gateway (Razorpay) Comparison
-            # -------------------------------------------------------------
+            # Execute matching operations conditionally
             if f_gtway1:
                 df_g1 = pd.read_csv(f_gtway1)
                 df_g1.columns = df_g1.columns.str.strip().str.lower()
                 df_g1 = df_g1.rename(columns={'txn id': 'id', 'transaction id': 'id', 'payment_id': 'id'})
                 df_g1['id'] = df_g1['id'].astype(str)
-                
-                # Merge logic
                 merged_g1 = pd.merge(df_master, df_g1, on='id', how='left', suffixes=('_store', '_g1'))
                 ghost_g1 = merged_g1[merged_g1[df_g1.columns[1]].isna()]
                 leaked_orders_count += len(ghost_g1)
 
-            # -------------------------------------------------------------
-            # Channel 3: Backup Gateway (Stripe) Comparison
-            # -------------------------------------------------------------
             if f_gtway2:
                 df_g2 = pd.read_csv(f_gtway2)
                 df_g2.columns = df_g2.columns.str.strip().str.lower()
                 df_g2 = df_g2.rename(columns={'txn id': 'id', 'transaction id': 'id'})
                 df_g2['id'] = df_g2['id'].astype(str)
-                
-                merged_g2 = pd.merge(df_master, df_g2, on='id', how='left')
-                # Simple flag logic example for high fees
                 if 'fee' in df_g2.columns and 'amount' in df_g2.columns:
                     high_fee = df_g2[df_g2['fee'] > (df_g2['amount'] * expected_fee_pct)]
                     fee_anomalies_count += len(high_fee)
 
-            # -------------------------------------------------------------
-            # Channel 5: Logistics Tracker (Shiprocket Cod/Prepaid matching)
-            # -------------------------------------------------------------
             if f_logistics:
                 df_log = pd.read_csv(f_logistics)
                 df_log.columns = df_log.columns.str.strip().str.lower()
-                df_log = df_log.rename(columns={'awb': 'id', 'order id': 'id', 'order_id': 'id'})
+                df_log = df_log.rename(columns={'order id': 'id', 'order_id': 'id'})
                 df_log['id'] = df_log['id'].astype(str)
-                
                 merged_log = pd.merge(df_master, df_log, on='id', how='left')
                 unfulfilled = merged_log[merged_log[df_log.columns[1]].isna()]
                 unfulfilled_orders_count = len(unfulfilled)
 
-            # -------------------------------------------------------------
-            # Step 3: High-End Visualizations & Executive Summary
-            # -------------------------------------------------------------
-            st.markdown("### 📈 Step 2: System Health & Executive Summary")
-            
+            # 7. Executive Visualization Panels
+            st.markdown("### 📈 2. Channel System Diagnostics Summary")
             m1, m2, m3, m4 = st.columns(4)
             with m1:
-                st.metric("Total Ingested Orders", f"{total_orders}", help="Total unique orders registered in storefront database")
+                st.metric("Total Ingested Volume", f"{total_orders} Txns")
             with m2:
-                st.metric("Ghost Orders (Revenue Leak)", f"{leaked_orders_count}", delta=f"-{leaked_orders_count}" if leaked_orders_count > 0 else "0", delta_color="inverse")
+                st.metric("Ghost Orders (Leakage)", f"{leaked_orders_count} Units", delta=f"-{leaked_orders_count}" if leaked_orders_count > 0 else "0", delta_color="inverse")
             with m3:
-                st.metric("Fee Rule Violations", f"{fee_anomalies_count}", delta=f"{fee_anomalies_count} flagged" if fee_anomalies_count > 0 else "0", delta_color="off")
+                st.metric("Fee Discrepancies", f"{fee_anomalies_count} Flagged")
             with m4:
-                st.metric("Unshipped / Lost Orders", f"{unfulfilled_orders_count}", help="Orders paid for but missing from logistics logs")
+                st.metric("Logistics Dropouts", f"{unfulfilled_orders_count} Units")
 
-            st.markdown("### 🔍 Step 3: Granular Channel Overviews")
+            st.markdown("<div style='margin-bottom: 30px;'></div>", unsafe_allow_html=True)
+            st.markdown("### 🔍 3. Segmented Operational Reports")
             
-            # Tabbed interface to separate messy multi-file results cleanly
-            tab1, tab2, tab3 = st.tabs(["Ghost Orders Analysis", "Fee Deviations", "Logistics Discrepancies"])
+            # Interactive tab matrix
+            tab1, tab2, tab3 = st.tabs(["🔒 Ghost Orders In-Depth", "💸 Fee Inconsistencies", "📦 Missing Shipping Records"])
             
             with tab1:
-                st.subheader("Storefront vs Payment Gateways Dropouts")
                 if f_gtway1 and leaked_orders_count > 0:
-                    st.dataframe(ghost_g1[['id']].rename(columns={'id': 'Flagged Order ID'}), use_container_width=True)
+                    st.dataframe(ghost_g1[['id']].rename(columns={'id': 'Flagged Dropout Order ID'}), use_container_width=True)
                 else:
-                    st.success("No multi-channel order dropouts discovered.")
+                    st.success("System verified: All active digital orders perfectly reconcile across storefront channels.")
                     
             with tab2:
-                st.subheader("Processor Fee Anomalies")
                 if fee_anomalies_count > 0:
                     st.dataframe(high_fee, use_container_width=True)
                 else:
-                    st.success("All processor transactions settle within your expected percentage variance thresholds.")
+                    st.success("System verified: Platform fee structures fall accurately within expected percentage bounds.")
                     
             with tab3:
-                st.subheader("Storefront vs Courier Matching")
                 if f_logistics and unfulfilled_orders_count > 0:
                     st.dataframe(unfulfilled[['id']], use_container_width=True)
                 else:
-                    st.success("All processed sales have corresponding tracking information generated.")
+                    st.success("System verified: No shipping tracking dropouts recorded across operations.")
 else:
-    st.info("💡 To begin, upload at least your Master Storefront data file to populate the hub framework.")
+    st.markdown("<div style='background-color: #161b22; padding: 20px; border-radius: 8px; border: 1px solid #30363d; color: #8b949e;'>💡 <b>System Standby:</b> Please upload your Master Storefront data template in the ingestion zone above to initialize system matrix mapping paths.</div>", unsafe_allow_html=True)
