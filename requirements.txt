@@ -4,3 +4,4 @@ pydantic
 supabase
 boto3
 bcrypt
+plotly
