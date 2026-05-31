@@ -60,38 +60,37 @@ def render_auth_screen():
     # Toggle between Login and Registration
     auth_mode = st.radio("Choose Option", ["Sign In", "Create Account"], horizontal=True, label_visibility="collapsed")
     
-    st.markdown('<div class="auth-box">', unsafe_allow_html=True)
-    email = st.text_input("Business Email Address")
-    password = st.text_input("Account Password", type="password")
-    
-    if auth_mode == "Sign In":
-        if st.button("Log In to Dashboard", use_container_width=True):
-            if supabase:
-                try:
-                    # Authenticate directly with Supabase Cloud
-                    res = supabase.auth.sign_in_with_password({"email": email, "password": password})
-                    st.session_state.logged_in = True
-                    st.session_state.user_id = res.user.id
-                    st.session_state.user_email = res.user.email
-                    st.success("Authentication confirmed! Loading parameters...")
-                    st.rerun()
-                except Exception as e:
-                    st.error(f"Invalid Credentials: {e}")
-            else:
-                st.error("System Configuration Error: Missing Secret Database Handshakes.")
-                
-    elif auth_mode == "Create Account":
-        st.caption("Password requirements: Minimum 6 characters.")
-        if st.button("Register Corporate Profile", use_container_width=True):
-            if supabase:
-                try:
-                    # Register user in Supabase secure auth vault
-                    res = supabase.auth.sign_up({"email": email, "password": password})
-                    st.success("Account initialized successfully! Please verify via your email or toggle to 'Sign In' to log into your console.")
-                except Exception as e:
-                    st.error(f"Registration Interrupted: {e}")
-            else:
-                st.error("System Configuration Error: Database engine offline.")
+    # NEW: Use an official Streamlit container to hold your fields cleanly
+    with st.container(border=True):
+        email = st.text_input("Business Email Address")
+        password = st.text_input("Account Password", type="password")
+        
+        if auth_mode == "Sign In":
+            if st.button("Log In to Dashboard", use_container_width=True):
+                if supabase:
+                    try:
+                        res = supabase.auth.sign_in_with_password({"email": email, "password": password})
+                        st.session_state.logged_in = True
+                        st.session_state.user_id = res.user.id
+                        st.session_state.user_email = res.user.email
+                        st.success("Authentication confirmed! Loading parameters...")
+                        st.rerun()
+                    except Exception as e:
+                        st.error(f"Invalid Credentials: {e}")
+                else:
+                    st.error("System Configuration Error: Missing Secret Database Handshakes.")
+                    
+        elif auth_mode == "Create Account":
+            st.caption("Password requirements: Minimum 6 characters.")
+            if st.button("Register Corporate Profile", use_container_width=True):
+                if supabase:
+                    try:
+                        res = supabase.auth.sign_up({"email": email, "password": password})
+                        st.success("Account initialized successfully! Please verify via your email or toggle to 'Sign In' to log into your console.")
+                    except Exception as e:
+                        st.error(f"Registration Interrupted: {e}")
+                else:
+                    st.error("System Configuration Error: Database engine offline.")
     st.markdown('</div>', unsafe_allow_html=True)
 
 # ==========================================
