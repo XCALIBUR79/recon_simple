@@ -1,5 +1,3 @@
-st.write("Supabase Connected:", supabase is not None)
-
 import streamlit as st
 import pandas as pd
 import requests
@@ -15,10 +13,14 @@ st.set_page_config(page_title="ReconSimple Pro", layout="wide", initial_sidebar_
 def init_supabase() -> Client:
     try:
         url = st.secrets["SUPABASE_URL"]
-        key = st.secrets["SUPABASE_KEY"]
+        key = st.secrets["SUPABASE_ANON_KEY"]
+
         return create_client(url, key)
-    except Exception:
-    return None
+
+    except Exception as e:
+        st.error(f"Supabase Connection Error: {e}")
+        return None
+
 supabase = init_supabase()
 
 st.write("Supabase Connected:", supabase is not None)
