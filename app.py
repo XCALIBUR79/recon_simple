@@ -19,7 +19,6 @@ def init_supabase() -> Client:
         return create_client(url, key)
     except Exception:
     return None
-
 supabase = init_supabase()
 
 st.write("Supabase Connected:", supabase is not None)
