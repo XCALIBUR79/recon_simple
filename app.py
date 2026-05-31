@@ -22,6 +22,9 @@ def init_supabase() -> Client:
 
 supabase = init_supabase()
 
+st.write("Supabase Connected:", supabase is not None)
+
+
 # Premium Luxury Dark UI Theme
 st.markdown("""
     <style>
