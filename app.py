@@ -1,3 +1,5 @@
+st.write("Supabase Connected:", supabase is not None)
+
 import streamlit as st
 import pandas as pd
 import requests
